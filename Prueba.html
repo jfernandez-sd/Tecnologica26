@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -13,12 +12,14 @@
             theme: {
                 extend: {
                     colors: {
-                        'deep-dark': '#050505',
-                        'electric-blue': '#00BFFF', /* A vibrant blue */
-                        'cyber-cyan': '#00FFFF', /* A bright cyan */
+                        'deep-dark': '#050505', // Pure black as per original request
+                        'electric-blue': '#00BFFF', // Original request
+                        'cyber-cyan': '#00FFFF', // Original request
+                        'tech-purple': '#A855F7', // Inspired by website
+                        'tech-pink': '#EC4899', // Inspired by website
                     },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'], // Example sans-serif font
+                        sans: ['Inter', 'sans-serif'], // Inter is a good modern sans-serif
                     },
                 }
             }
@@ -55,8 +56,8 @@
 
         /* Custom animations for loading and flash */
         @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 5px #00BFFF, 0 0 10px #00BFFF, 0 0 15px #00BFFF; }
-            50% { box-shadow: 0 0 10px #00FFFF, 0 0 20px #00FFFF, 0 0 30px #00FFFF; }
+            0%, 100% { box-shadow: 0 0 5px var(--tw-colors-electric-blue), 0 0 10px var(--tw-colors-electric-blue), 0 0 15px var(--tw-colors-electric-blue); }
+            50% { box-shadow: 0 0 10px var(--tw-colors-cyber-cyan), 0 0 20px var(--tw-colors-cyber-cyan), 0 0 30px var(--tw-colors-cyber-cyan); }
         }
 
         .animate-pulse-glow {
@@ -98,21 +99,32 @@
             @apply bg-gray-800 text-electric-blue border-2 border-electric-blue hover:bg-electric-blue hover:text-deep-dark;
             list-style: none; /* Remove default list bullet */
         }
+        .quiz-option-item.is-selected {
+            @apply border-tech-purple;
+            background-color: rgba(168, 85, 247, 0.2); /* Semi-transparent tech-purple for selected state */
+        }
         .quiz-option-item.correct {
             @apply bg-green-600 border-green-600 text-white;
+            box-shadow: 0 0 8px var(--tw-colors-green-600), 0 0 15px var(--tw-colors-green-500);
         }
         .quiz-option-item.incorrect {
             @apply bg-red-600 border-red-600 text-white;
+            box-shadow: 0 0 8px var(--tw-colors-red-600), 0 0 15px var(--tw-colors-red-500);
+        }
+        .quiz-option-item.show-correct-answer {
+            @apply border-green-500 text-green-500;
         }
         .quiz-option-item.disabled {
             @apply opacity-50 cursor-not-allowed;
+            box-shadow: none; /* Disable glow when disabled */
         }
 
         /* Countdown text styling */
         .countdown-text-display {
             @apply text-5xl font-extrabold text-cyber-cyan;
             letter-spacing: 0.1em;
-            text-shadow: 0 0 10px #00FFFF, 0 0 20px #00FFFF;
+            text-shadow: 0 0 10px var(--tw-colors-cyber-cyan), 0 0 20px var(--tw-colors-cyber-cyan);
+            line-height: 1.2;
         }
     </style>
 </head>
@@ -146,9 +158,11 @@
         const SLOGAN = "Haz que pase";
         const ANNIVERSARY = "15º Aniversario";
         // Define the target date for the event activation:
-        // Thursday, October 15, 2026, 21:00 in Santa Cruz de Tenerife.
-        // Santa Cruz de Tenerife is UTC+1 in October (WEST).
-        const TARGET_ACTIVATION_DATE = new Date('2026-10-15T21:00:00+01:00');
+        // May 15, 2026, 21:00 in Santa Cruz de Tenerife (UTC+1 assuming no daylight saving shifts at that specific time of year, otherwise it's UTC+0 for Canary Islands).
+        // Using ISO string 'YYYY-MM-DDTHH:mm:ss' will be interpreted as local time in most browsers if no timezone is specified.
+        // To be explicit for Santa Cruz de Tenerife (Canary Islands, usually WET/WEST = UTC+0/UTC+1):
+        // For 21:00 on May 15, 2026, which is typically UTC+1 during daylight saving. Set it to UTC+0 to be safe.
+        const TARGET_ACTIVATION_DATE = new Date('2026-05-15T21:00:00+01:00'); // Explicitly 21:00 UTC+1
 
         const QUIZ_QUESTIONS = [
             {
@@ -292,22 +306,24 @@
         const LandingScreen = ({ onConnect }) => (
             <div className="flex flex-col items-center justify-center h-screen w-screen text-center p-8 bg-deep-dark">
                 <LucideIcon name="zap" size={100} color="#00FFFF" className="mb-8 animate-pulse-glow" />
-                <h1 className="text-5xl font-black italic text-cyber-cyan mb-4 leading-tight">{EVENT_NAME}</h1>
+                <h1 className="text-5xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-tech-purple to-electric-blue mb-4 leading-tight">{EVENT_NAME}</h1>
                 <h2 className="text-3xl font-bold text-electric-blue mb-8">{ANNIVERSARY}</h2>
                 <button
                     onClick={onConnect}
-                    className="px-10 py-5 bg-electric-blue text-deep-dark rounded-full text-2xl font-black uppercase tracking-wide
-                               hover:bg-cyber-cyan transition-all duration-300 transform active:scale-95
+                    className="px-10 py-5 rounded-full text-2xl font-black uppercase tracking-wide
+                               bg-gradient-to-r from-tech-purple to-electric-blue text-deep-dark
+                               hover:from-electric-blue hover:to-tech-purple transition-all duration-300 transform active:scale-95
                                focus:outline-none focus:ring-4 focus:ring-electric-blue focus:ring-opacity-75"
                 >
                     Vincular Dispositivo
                 </button>
+                <p className="mt-12 text-gray-500 text-sm italic">Diseñado para Marketing de Guerrilla</p>
             </div>
         );
 
         const ConnectingScreen = () => (
             <div className="flex flex-col items-center justify-center h-screen w-screen bg-deep-dark text-center p-8">
-                <LucideIcon name="loader" size={80} color="#00BFFF" className="mb-6 animate-spin-slow" />
+                <LucideIcon name="loader" size={80} color="electric-blue" className="mb-6 animate-spin-slow" />
                 <h2 className="text-4xl font-bold text-electric-blue animate-pulse-glow">Sincronizando Nodo...</h2>
             </div>
         );
@@ -361,9 +377,10 @@
                                 key={index}
                                 onClick={() => selectedAnswer === null && handleAnswer(option)} /* Only allow click if no answer is selected */
                                 className={`quiz-option-item
-                                    ${selectedAnswer === option && feedback === 'correct' ? 'correct' :
-                                      selectedAnswer === option && feedback === 'incorrect' ? 'incorrect' : ''}
-                                    ${selectedAnswer !== null && option === currentQuestion.answer && selectedAnswer !== option ? 'border-green-500 text-green-500' : ''}
+                                    ${selectedAnswer === option ? 'is-selected' : ''}
+                                    ${selectedAnswer === option && feedback === 'correct' ? 'correct' : ''}
+                                    ${selectedAnswer === option && feedback === 'incorrect' ? 'incorrect' : ''}
+                                    ${selectedAnswer !== null && option === currentQuestion.answer && selectedAnswer !== option ? 'show-correct-answer' : ''}
                                     ${selectedAnswer !== null ? 'disabled' : ''}
                                 `}
                             >
@@ -377,8 +394,9 @@
 
         // Helper function to calculate time remaining until a target date
         const calculateTimeRemaining = (targetDate) => {
+            if (!targetDate) return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
             const now = new Date();
-            const difference = targetDate.getTime() - now.getTime(); // Difference in milliseconds
+            const difference = targetDate.getTime() - now.getTime(); // Diferencia en milisegundos
 
             if (difference <= 0) {
                 return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
@@ -415,18 +433,33 @@
             return (
                 <div className="flex flex-col items-center justify-between h-screen w-screen p-8 bg-deep-dark">
                     <div className="text-center">
-                        <h2 className="text-4xl font-black italic text-cyber-cyan mb-4">{SLOGAN}</h2>
+                        <h2 className="text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-tech-purple to-electric-blue mb-4 leading-tight">{SLOGAN}</h2>
                         <p className="text-xl text-electric-blue">El momento está por llegar...</p>
                     </div>
 
                     <div className="flex flex-col items-center space-y-8 my-auto">
                         {!quizActive ? (
                             timeRemaining.total > 0 ? (
-                                <div className="countdown-text-display flex flex-col items-center">
-                                    <span>{String(timeRemaining.days).padStart(2, '0')}d</span>
-                                    <span>{String(timeRemaining.hours).padStart(2, '0')}h</span>
-                                    <span>{String(timeRemaining.minutes).padStart(2, '0')}m</span>
-                                    <span>{String(timeRemaining.seconds).padStart(2, '0')}s</span>
+                                <div className="flex justify-center items-end space-x-4">
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">{String(timeRemaining.days).padStart(2, '0')}</span>
+                                        <span className="text-xl font-bold text-electric-blue">Días</span>
+                                    </div>
+                                    <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">:</span>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">{String(timeRemaining.hours).padStart(2, '0')}</span>
+                                        <span className="text-xl font-bold text-electric-blue">Horas</span>
+                                    </div>
+                                    <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">:</span>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">{String(timeRemaining.minutes).padStart(2, '0')}</span>
+                                        <span className="text-xl font-bold text-electric-blue">Minutos</span>
+                                    </div>
+                                    <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">:</span>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">{String(timeRemaining.seconds).padStart(2, '0')}</span>
+                                        <span className="text-xl font-bold text-electric-blue">Segundos</span>
+                                    </div>
                                 </div>
                             ) : (
                                 <h3 className="text-4xl font-extrabold text-cyber-cyan animate-pulse-glow">¡ACTIVANDO!</h3>
@@ -438,8 +471,9 @@
                         ) : (
                             <button
                                 onClick={() => setQuizActive(true)}
-                                className="px-6 py-3 bg-gray-800 text-electric-blue rounded-full text-lg font-bold
-                                           hover:bg-electric-blue hover:text-deep-dark transition-all duration-300
+                                className="px-6 py-3 rounded-full text-lg font-bold
+                                           bg-gradient-to-r from-tech-purple to-electric-blue text-deep-dark
+                                           hover:from-electric-blue hover:to-tech-purple transition-all duration-300
                                            focus:outline-none focus:ring-2 focus:ring-electric-blue focus:ring-opacity-75"
                             >
                                 Jugar Quiz ({QUIZ_QUESTIONS.length} preguntas)
@@ -489,7 +523,6 @@
 
         const App = () => {
             const [screen, setScreen] = useState('landing'); // 'landing', 'connecting', 'waiting', 'activating'
-            const wakeLockRef = useRef(null);
 
             // Request wake lock when entering 'waiting' or 'activating' state
             useEffect(() => {
@@ -551,4 +584,3 @@
     </script>
 </body>
 </html>
-```
