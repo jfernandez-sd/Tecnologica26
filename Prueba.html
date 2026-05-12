@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -107,35 +108,11 @@
             @apply opacity-50 cursor-not-allowed;
         }
 
-        /* Countdown circle */
-        .countdown-circle {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: conic-gradient(from 0deg, #00FFFF 0%, transparent 0%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: white;
-            box-shadow: 0 0 15px #00FFFF, 0 0 25px #00FFFF, 0 0 35px #00FFFF;
-        }
-
-        .countdown-circle::before {
-            content: '';
-            position: absolute;
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            background-color: #050505;
-            z-index: 1;
-        }
-
-        .countdown-circle span {
-            position: relative;
-            z-index: 2;
+        /* Countdown text styling */
+        .countdown-text-display {
+            @apply text-5xl font-extrabold text-cyber-cyan;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 10px #00FFFF, 0 0 20px #00FFFF;
         }
     </style>
 </head>
@@ -168,6 +145,11 @@
         const EVENT_NAME = "Tecnológica Santa Cruz 2026";
         const SLOGAN = "Haz que pase";
         const ANNIVERSARY = "15º Aniversario";
+        // Define the target date for the event activation:
+        // Thursday, October 15, 2026, 21:00 in Santa Cruz de Tenerife.
+        // Santa Cruz de Tenerife is UTC+1 in October (WEST).
+        const TARGET_ACTIVATION_DATE = new Date('2026-10-15T21:00:00+01:00');
+
         const QUIZ_QUESTIONS = [
             {
                 question: "¿En qué año se celebró por primera vez la Tecnológica Santa Cruz?",
@@ -196,7 +178,6 @@
             },
         ];
         const TRIGGER_DURATION_MS = 9000; // 9 seconds for activation state
-        const COUNTDOWN_SECONDS = 15; // 15 seconds for demo countdown
 
         // --- API Utilities --- //
 
@@ -321,7 +302,6 @@
                 >
                     Vincular Dispositivo
                 </button>
-                <p className="mt-12 text-gray-500 text-sm italic">Diseñado para Marketing de Guerrilla</p>
             </div>
         );
 
@@ -395,23 +375,42 @@
             );
         };
 
+        // Helper function to calculate time remaining until a target date
+        const calculateTimeRemaining = (targetDate) => {
+            const now = new Date();
+            const difference = targetDate.getTime() - now.getTime(); // Difference in milliseconds
+
+            if (difference <= 0) {
+                return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
+            }
+
+            const seconds = Math.floor((difference / 1000) % 60);
+            const minutes = Math.floor((difference / 1000 / 60) % 60);
+            const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+
+            return { total: difference, days, hours, minutes, seconds };
+        };
+
         const WaitingScreen = ({ onCountdownEnd }) => {
-            const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
             const [quizActive, setQuizActive] = useState(false);
+            const [timeRemaining, setTimeRemaining] = useState(calculateTimeRemaining(TARGET_ACTIVATION_DATE));
 
             useEffect(() => {
-                // Only start countdown if quiz is not active
-                if (!quizActive) {
-                    if (countdown > 0) {
-                        const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-                        return () => clearTimeout(timer);
-                    } else {
-                        onCountdownEnd();
-                    }
-                }
-            }, [countdown, quizActive, onCountdownEnd]);
+                if (quizActive) return; // Pause countdown if quiz is active
 
-            const circleDasharray = `${(countdown / COUNTDOWN_SECONDS) * 360}deg, 360deg`;
+                const timer = setInterval(() => {
+                    const newTimeRemaining = calculateTimeRemaining(TARGET_ACTIVATION_DATE);
+                    setTimeRemaining(newTimeRemaining);
+
+                    if (newTimeRemaining.total <= 0) {
+                        clearInterval(timer);
+                        onCountdownEnd(); // Trigger activation when countdown ends
+                    }
+                }, 1000);
+
+                return () => clearInterval(timer);
+            }, [quizActive, onCountdownEnd]); // Depend on quizActive and onCountdownEnd
 
             return (
                 <div className="flex flex-col items-center justify-between h-screen w-screen p-8 bg-deep-dark">
@@ -422,12 +421,16 @@
 
                     <div className="flex flex-col items-center space-y-8 my-auto">
                         {!quizActive ? (
-                            <div
-                                className="countdown-circle"
-                                style={{ background: `conic-gradient(from 0deg, var(--tw-gradient-stops) ${360 - (countdown / COUNTDOWN_SECONDS) * 360}deg, transparent 0%)`, '--tw-gradient-stops': '#00FFFF 0%, #00FFFF 100%' }}
-                            >
-                                <span>{countdown}</span>
-                            </div>
+                            timeRemaining.total > 0 ? (
+                                <div className="countdown-text-display flex flex-col items-center">
+                                    <span>{String(timeRemaining.days).padStart(2, '0')}d</span>
+                                    <span>{String(timeRemaining.hours).padStart(2, '0')}h</span>
+                                    <span>{String(timeRemaining.minutes).padStart(2, '0')}m</span>
+                                    <span>{String(timeRemaining.seconds).padStart(2, '0')}s</span>
+                                </div>
+                            ) : (
+                                <h3 className="text-4xl font-extrabold text-cyber-cyan animate-pulse-glow">¡ACTIVANDO!</h3>
+                            )
                         ) : null}
 
                         {quizActive ? (
@@ -548,4 +551,4 @@
     </script>
 </body>
 </html>
-
+```
