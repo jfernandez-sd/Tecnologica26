@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tecnológica Santa Cruz 2026 - ¡Haz que pase!</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom Tailwind Configuration for Branding -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'deep-dark': '#050505',
+                        'electric-blue': '#00BFFF', /* A vibrant blue */
+                        'cyber-cyan': '#00FFFF', /* A bright cyan */
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'], // Example sans-serif font
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- React and ReactDOM CDNs -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel CDN for JSX transformation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Global styles for body and root */
+        body {
+            background-color: #050505; /* Pure black background */
+            color: white;
+            font-family: 'Inter', sans-serif; /* Using a modern sans-serif font */
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        #root {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Full viewport height */
+            width: 100vw; /* Full viewport width */
+            box-sizing: border-box;
+        }
+
+        /* Custom animations for loading and flash */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px #00BFFF, 0 0 10px #00BFFF, 0 0 15px #00BFFF; }
+            50% { box-shadow: 0 0 10px #00FFFF, 0 0 20px #00FFFF, 0 0 30px #00FFFF; }
+        }
+
+        .animate-pulse-glow {
+            animation: pulse-glow 2s infinite alternate;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .animate-spin-slow {
+            animation: spin 5s linear infinite;
+        }
+
+        @keyframes flash {
+            0%, 100% { background-color: #050505; }
+            50% { background-color: #FFFFFF; }
+        }
+
+        .animate-flash {
+            animation: flash 0.1s steps(1) infinite;
+        }
+
+        /* Ensure icons are rendered correctly by Lucide */
+        [data-lucide] {
+            display: inline-block;
+            vertical-align: middle;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            width: 1em;
+            height: 1em;
+        }
+
+        /* Quiz answer styling for list items */
+        .quiz-option-item {
+            @apply w-full p-4 mb-3 rounded-lg text-lg font-bold transition-all duration-300 cursor-pointer;
+            @apply bg-gray-800 text-electric-blue border-2 border-electric-blue hover:bg-electric-blue hover:text-deep-dark;
+            list-style: none; /* Remove default list bullet */
+        }
+        .quiz-option-item.correct {
+            @apply bg-green-600 border-green-600 text-white;
+        }
+        .quiz-option-item.incorrect {
+            @apply bg-red-600 border-red-600 text-white;
+        }
+        .quiz-option-item.disabled {
+            @apply opacity-50 cursor-not-allowed;
+        }
+
+        /* Countdown circle */
+        .countdown-circle {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #00FFFF 0%, transparent 0%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 0 15px #00FFFF, 0 0 25px #00FFFF, 0 0 35px #00FFFF;
+        }
+
+        .countdown-circle::before {
+            content: '';
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background-color: #050505;
+            z-index: 1;
+        }
+
+        .countdown-circle span {
+            position: relative;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body class="bg-deep-dark text-white overflow-hidden touch-action-manipulation">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Ensure React and ReactDOM are available
+        const { useState, useEffect, useRef, useCallback } = React;
+        const { createRoot } = ReactDOM;
+
+        // Helper for Lucide Icons
+        const LucideIcon = ({ name, size = 24, color = 'currentColor', className = '' }) => {
+            const iconRef = useRef(null);
+            useEffect(() => {
+                if (iconRef.current && lucide && lucide.createIcons) {
+                    iconRef.current.innerHTML = lucide.icons[name] ? lucide.icons[name].toSvg({
+                        width: size,
+                        height: size,
+                        stroke: color,
+                        class: className
+                    }) : '';
+                    lucide.createIcons(); // Re-render all icons
+                }
+            }, [name, size, color, className]);
+            return <span ref={iconRef} className={className} data-lucide={name}></span>;
+        };
+
+        // --- Global Constants --- //
+        const EVENT_NAME = "Tecnológica Santa Cruz 2026";
+        const SLOGAN = "Haz que pase";
+        const ANNIVERSARY = "15º Aniversario";
+        const QUIZ_QUESTIONS = [
+            {
+                question: "¿En qué año se celebró por primera vez la Tecnológica Santa Cruz?",
+                options: ["2011", "2006", "2016", "2021"],
+                answer: "2011"
+            },
+            {
+                question: "¿Qué conocido hacker y experto en ciberseguridad es famoso por llevar gorra y ha participado en el evento?",
+                options: ["Kevin Mitnick", "Julian Assange", "Chema Alonso", "Edward Snowden"],
+                answer: "Chema Alonso"
+            },
+            {
+                question: "¿Cuál de estos icónicos lugares ha sido sede de la Tecnológica Santa Cruz?",
+                options: ["Auditorio de Tenerife", "Teatro Guimerá", "Recinto Ferial", "Museo de la Naturaleza y el Hombre"],
+                answer: "Teatro Guimerá"
+            },
+            {
+                question: "¿Qué entidad ha sido uno de los principales organizadores del evento a lo largo de los años?",
+                options: ["Cabildo de Tenerife", "Gobierno de Canarias", "Sociedad de Desarrollo de Santa Cruz", "Universidad de La Laguna"],
+                answer: "Sociedad de Desarrollo de Santa Cruz"
+            },
+            {
+                question: "¿Cuál es el lema actual del evento, inspirando a la acción y la innovación?",
+                options: ["Conecta y Avanza", "Digitaliza el Futuro", "Haz que pase", "Innovar para Crecer"],
+                answer: "Haz que pase"
+            },
+        ];
+        const TRIGGER_DURATION_MS = 9000; // 9 seconds for activation state
+        const COUNTDOWN_SECONDS = 15; // 15 seconds for demo countdown
+
+        // --- API Utilities --- //
+
+        // Web Audio API Context and Oscillator
+        let audioContext = null;
+        let oscillator = null;
+        let gainNode = null;
+
+        const initAudio = async () => {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            // Ensure audio context is resumable for iOS/Safari
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+            // Play a tiny silent buffer to fully unlock on iOS
+            const buffer = audioContext.createBuffer(1, 1, 22050);
+            const source = audioContext.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioContext.destination);
+            source.start(0);
+            source.stop(0.001);
+
+            console.log("AudioContext initialized and resumed.");
+        };
+
+        const playTriggerSound = () => {
+            if (!audioContext) return;
+
+            // Stop any existing oscillator
+            if (oscillator) {
+                oscillator.stop();
+                oscillator.disconnect();
+            }
+            if (gainNode) {
+                gainNode.disconnect();
+            }
+
+            oscillator = audioContext.createOscillator();
+            gainNode = audioContext.createGain();
+
+            oscillator.type = 'sawtooth'; // Sawtooth wave for zumbido
+            oscillator.frequency.setValueAtTime(55, audioContext.currentTime); // Start at 55Hz
+            oscillator.frequency.linearRampToValueAtTime(110, audioContext.currentTime + TRIGGER_DURATION_MS / 1000); // Ramp to 110Hz
+
+            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); // Start at half volume
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + TRIGGER_DURATION_MS / 1000); // Fade out
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.start(audioContext.currentTime);
+
+            setTimeout(() => {
+                if (oscillator) {
+                    oscillator.stop();
+                    oscillator.disconnect();
+                    oscillator = null;
+                }
+                if (gainNode) {
+                    gainNode.disconnect();
+                    gainNode = null;
+                }
+            }, TRIGGER_DURATION_MS);
+        };
+
+        const vibrateDevice = () => {
+            if (navigator.vibrate) {
+                // Pattern: 400ms on, 100ms off, 400ms on, 100ms off, 800ms on, 100ms off, 1200ms on
+                navigator.vibrate([400, 100, 400, 100, 800, 100, 1200]);
+                // Repeat for the duration of the trigger
+                const interval = setInterval(() => {
+                    navigator.vibrate([400, 100, 400, 100, 800, 100, 1200]);
+                }, 3100); // Total duration of one pattern is 400+100+400+100+800+100+1200 = 3100ms
+                setTimeout(() => {
+                    clearInterval(interval);
+                    navigator.vibrate(0); // Stop vibration
+                }, TRIGGER_DURATION_MS);
+            } else {
+                console.warn("Vibration API not supported.");
+            }
+        };
+
+        let wakeLock = null;
+        const requestWakeLock = async () => {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('Screen Wake Lock is active!');
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Screen Wake Lock was released');
+                    });
+                } catch (err) {
+                    console.error(`${err.name}, ${err.message}`);
+                }
+            } else {
+                console.warn("Screen Wake Lock API not supported.");
+            }
+        };
+
+        const releaseWakeLock = () => {
+            if (wakeLock) {
+                wakeLock.release();
+                wakeLock = null;
+                console.log('Screen Wake Lock released.');
+            }
+        };
+
+        // --- Components --- //
+
+        const LandingScreen = ({ onConnect }) => (
+            <div className="flex flex-col items-center justify-center h-screen w-screen text-center p-8 bg-deep-dark">
+                <LucideIcon name="zap" size={100} color="#00FFFF" className="mb-8 animate-pulse-glow" />
+                <h1 className="text-5xl font-black italic text-cyber-cyan mb-4 leading-tight">{EVENT_NAME}</h1>
+                <h2 className="text-3xl font-bold text-electric-blue mb-8">{ANNIVERSARY}</h2>
+                <button
+                    onClick={onConnect}
+                    className="px-10 py-5 bg-electric-blue text-deep-dark rounded-full text-2xl font-black uppercase tracking-wide
+                               hover:bg-cyber-cyan transition-all duration-300 transform active:scale-95
+                               focus:outline-none focus:ring-4 focus:ring-electric-blue focus:ring-opacity-75"
+                >
+                    Vincular Dispositivo
+                </button>
+                <p className="mt-12 text-gray-500 text-sm italic">Diseñado para Marketing de Guerrilla</p>
+            </div>
+        );
+
+        const ConnectingScreen = () => (
+            <div className="flex flex-col items-center justify-center h-screen w-screen bg-deep-dark text-center p-8">
+                <LucideIcon name="loader" size={80} color="#00BFFF" className="mb-6 animate-spin-slow" />
+                <h2 className="text-4xl font-bold text-electric-blue animate-pulse-glow">Sincronizando Nodo...</h2>
+            </div>
+        );
+
+        const QuizGame = ({ onComplete }) => {
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [selectedAnswer, setSelectedAnswer] = useState(null);
+            const [feedback, setFeedback] = useState(null); // 'correct', 'incorrect', null
+            const [score, setScore] = useState(0);
+            const [showResults, setShowResults] = useState(false);
+
+            const currentQuestion = QUIZ_QUESTIONS[currentQuestionIndex];
+
+            const handleAnswer = (answer) => {
+                setSelectedAnswer(answer);
+                if (answer === currentQuestion.answer) {
+                    setFeedback('correct');
+                    setScore(prev => prev + 1);
+                } else {
+                    setFeedback('incorrect');
+                }
+                setTimeout(() => {
+                    setSelectedAnswer(null);
+                    setFeedback(null);
+                    if (currentQuestionIndex < QUIZ_QUESTIONS.length - 1) {
+                        setCurrentQuestionIndex(prev => prev + 1);
+                    } else {
+                        setShowResults(true);
+                        setTimeout(onComplete, 3000); // Show results then complete
+                    }
+                }, 1500);
+            };
+
+            if (showResults) {
+                return (
+                    <div className="flex flex-col items-center justify-center text-center w-full max-w-md mx-auto p-4">
+                        <h3 className="text-3xl font-black text-cyber-cyan mb-4">¡Quiz Completado!</h3>
+                        <p className="text-2xl text-electric-blue">Tu puntuación: {score} / {QUIZ_QUESTIONS.length}</p>
+                        <p className="mt-8 text-xl text-gray-400 italic">Volviendo a la espera...</p>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="flex flex-col items-center justify-center text-center w-full max-w-md mx-auto p-4">
+                    <p className="text-sm text-gray-500 mb-2">Pregunta {currentQuestionIndex + 1} de {QUIZ_QUESTIONS.length}</p>
+                    <h3 className="text-2xl font-bold text-electric-blue mb-6 leading-relaxed">{currentQuestion.question}</h3>
+                    <ul className="w-full space-y-3 p-0">
+                        {currentQuestion.options.map((option, index) => (
+                            <li
+                                key={index}
+                                onClick={() => selectedAnswer === null && handleAnswer(option)} /* Only allow click if no answer is selected */
+                                className={`quiz-option-item
+                                    ${selectedAnswer === option && feedback === 'correct' ? 'correct' :
+                                      selectedAnswer === option && feedback === 'incorrect' ? 'incorrect' : ''}
+                                    ${selectedAnswer !== null && option === currentQuestion.answer && selectedAnswer !== option ? 'border-green-500 text-green-500' : ''}
+                                    ${selectedAnswer !== null ? 'disabled' : ''}
+                                `}
+                            >
+                                {option}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            );
+        };
+
+        const WaitingScreen = ({ onCountdownEnd }) => {
+            const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
+            const [quizActive, setQuizActive] = useState(false);
+
+            useEffect(() => {
+                // Only start countdown if quiz is not active
+                if (!quizActive) {
+                    if (countdown > 0) {
+                        const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+                        return () => clearTimeout(timer);
+                    } else {
+                        onCountdownEnd();
+                    }
+                }
+            }, [countdown, quizActive, onCountdownEnd]);
+
+            const circleDasharray = `${(countdown / COUNTDOWN_SECONDS) * 360}deg, 360deg`;
+
+            return (
+                <div className="flex flex-col items-center justify-between h-screen w-screen p-8 bg-deep-dark">
+                    <div className="text-center">
+                        <h2 className="text-4xl font-black italic text-cyber-cyan mb-4">{SLOGAN}</h2>
+                        <p className="text-xl text-electric-blue">El momento está por llegar...</p>
+                    </div>
+
+                    <div className="flex flex-col items-center space-y-8 my-auto">
+                        {!quizActive ? (
+                            <div
+                                className="countdown-circle"
+                                style={{ background: `conic-gradient(from 0deg, var(--tw-gradient-stops) ${360 - (countdown / COUNTDOWN_SECONDS) * 360}deg, transparent 0%)`, '--tw-gradient-stops': '#00FFFF 0%, #00FFFF 100%' }}
+                            >
+                                <span>{countdown}</span>
+                            </div>
+                        ) : null}
+
+                        {quizActive ? (
+                            <QuizGame onComplete={() => setQuizActive(false)} />
+                        ) : (
+                            <button
+                                onClick={() => setQuizActive(true)}
+                                className="px-6 py-3 bg-gray-800 text-electric-blue rounded-full text-lg font-bold
+                                           hover:bg-electric-blue hover:text-deep-dark transition-all duration-300
+                                           focus:outline-none focus:ring-2 focus:ring-electric-blue focus:ring-opacity-75"
+                            >
+                                Jugar Quiz ({QUIZ_QUESTIONS.length} preguntas)
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="text-gray-600 text-sm text-center">
+                        <p>Esperando la señal de activación...</p>
+                    </div>
+                </div>
+            );
+        };
+
+        const ActivationState = ({ onComplete }) => {
+            const [isFlashing, setIsFlashing] = useState(true);
+
+            useEffect(() => {
+                // Start flashing immediately
+                const flashInterval = setInterval(() => setIsFlashing(prev => !prev), 100); // 0.1s steps
+
+                // Trigger vibration and sound
+                vibrateDevice();
+                playTriggerSound();
+
+                // End activation after TRIGGER_DURATION_MS
+                const timeout = setTimeout(() => {
+                    clearInterval(flashInterval);
+                    setIsFlashing(false);
+                    onComplete();
+                }, TRIGGER_DURATION_MS);
+
+                return () => {
+                    clearInterval(flashInterval);
+                    clearTimeout(timeout);
+                };
+            }, [onComplete]);
+
+            const backgroundColor = isFlashing ? 'bg-white' : 'bg-deep-dark';
+
+            return (
+                <div className={`flex items-center justify-center h-screen w-screen ${backgroundColor} transition-colors duration-50`}>
+                    {/* The content itself is not visible during flash, just the background changes */}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [screen, setScreen] = useState('landing'); // 'landing', 'connecting', 'waiting', 'activating'
+            const wakeLockRef = useRef(null);
+
+            // Request wake lock when entering 'waiting' or 'activating' state
+            useEffect(() => {
+                if (screen === 'waiting' || screen === 'activating') {
+                    requestWakeLock();
+                } else {
+                    releaseWakeLock();
+                }
+            }, [screen]);
+
+            // Handle page visibility for wake lock re-acquisition
+            useEffect(() => {
+                const handleVisibilityChange = () => {
+                    if (document.visibilityState === 'visible' && (screen === 'waiting' || screen === 'activating')) {
+                        requestWakeLock();
+                    }
+                };
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+                return () => {
+                    document.removeEventListener('visibilitychange', handleVisibilityChange);
+                };
+            }, [screen]);
+
+            const handleConnect = useCallback(async () => {
+                setScreen('connecting');
+                await initAudio(); // Initialize and resume AudioContext on user gesture
+                setTimeout(() => {
+                    setScreen('waiting');
+                }, 2000); // Simulate connection time
+            }, []);
+
+            const handleCountdownEnd = useCallback(() => {
+                setScreen('activating');
+            }, []);
+
+            const handleActivationComplete = useCallback(() => {
+                setScreen('waiting'); // Return to waiting state after activation
+            }, []);
+
+            return (
+                <div className="h-screen w-screen overflow-hidden">
+                    {screen === 'landing' && <LandingScreen onConnect={handleConnect} />}
+                    {screen === 'connecting' && <ConnectingScreen />}
+                    {screen === 'waiting' && <WaitingScreen onCountdownEnd={handleCountdownEnd} />}
+                    {screen === 'activating' && <ActivationState onComplete={handleActivationComplete} />}
+                </div>
+            );
+        };
+
+        // Mount the React application
+        createRoot(document.getElementById('root')).render(<App />);
+
+        // Initialize Lucide icons after all components have rendered once
+        // This might need to be called again if icons are dynamically added later
+        useEffect(() => {
+            lucide.createIcons();
+        }, []);
+
+    </script>
+</body>
+</html>
+
