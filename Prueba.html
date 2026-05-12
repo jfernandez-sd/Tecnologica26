@@ -6,55 +6,54 @@
     <title>Tecnológica Santa Cruz 2026 - ¡Haz que pase!</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Custom Tailwind Configuration for Branding -->
+    <!-- Configuración personalizada de Tailwind -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'deep-dark': '#050505', // Pure black as per original request
-                        'electric-blue': '#00BFFF', // Original request
-                        'cyber-cyan': '#00FFFF', // Original request
-                        'tech-purple': '#A855F7', // Inspired by website
-                        'tech-pink': '#EC4899', // Inspired by website
+                        'deep-dark': '#050505',
+                        'electric-blue': '#00BFFF',
+                        'cyber-cyan': '#00FFFF',
+                        'tech-purple': '#A855F7',
+                        'tech-pink': '#EC4899',
                     },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'], // Inter is a good modern sans-serif
+                        sans: ['Inter', 'sans-serif'],
                     },
                 }
             }
         }
     </script>
-    <!-- React and ReactDOM CDNs -->
+    <!-- React y ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel CDN for JSX transformation -->
+    <!-- Babel para compilar JSX en el navegador -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Lucide Icons CDN -->
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Global styles for body and root */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+
         body {
-            background-color: #050505; /* Pure black background */
+            background-color: #050505;
             color: white;
-            font-family: 'Inter', sans-serif; /* Using a modern sans-serif font */
+            font-family: 'Inter', sans-serif;
             margin: 0;
-            overflow: hidden; /* Prevent scrolling */
+            overflow-x: hidden;
+            overflow-y: auto;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            touch-action: manipulation;
         }
 
         #root {
+            min-height: 100vh;
+            width: 100vw;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh; /* Full viewport height */
-            width: 100vw; /* Full viewport width */
-            box-sizing: border-box;
         }
 
-        /* Custom animations for loading and flash */
         @keyframes pulse-glow {
             0%, 100% { box-shadow: 0 0 5px var(--tw-colors-electric-blue), 0 0 10px var(--tw-colors-electric-blue), 0 0 15px var(--tw-colors-electric-blue); }
             50% { box-shadow: 0 0 10px var(--tw-colors-cyber-cyan), 0 0 20px var(--tw-colors-cyber-cyan), 0 0 30px var(--tw-colors-cyber-cyan); }
@@ -82,7 +81,10 @@
             animation: flash 0.1s steps(1) infinite;
         }
 
-        /* Ensure icons are rendered correctly by Lucide */
+        .text-shadow-glow {
+            text-shadow: 0 0 10px var(--tw-colors-cyber-cyan), 0 0 20px var(--tw-colors-cyber-cyan);
+        }
+
         [data-lucide] {
             display: inline-block;
             vertical-align: middle;
@@ -93,15 +95,17 @@
             height: 1em;
         }
 
-        /* Quiz answer styling for list items */
         .quiz-option-item {
             @apply w-full p-4 mb-3 rounded-lg text-lg font-bold transition-all duration-300 cursor-pointer;
-            @apply bg-gray-800 text-electric-blue border-2 border-electric-blue hover:bg-electric-blue hover:text-deep-dark;
-            list-style: none; /* Remove default list bullet */
+            @apply bg-gray-800 text-electric-blue border-2 border-electric-blue;
+            list-style: none;
+        }
+        .quiz-option-item:hover:not(.disabled) {
+            @apply bg-electric-blue text-deep-dark;
         }
         .quiz-option-item.is-selected {
             @apply border-tech-purple;
-            background-color: rgba(168, 85, 247, 0.2); /* Semi-transparent tech-purple for selected state */
+            background-color: rgba(168, 85, 247, 0.2);
         }
         .quiz-option-item.correct {
             @apply bg-green-600 border-green-600 text-white;
@@ -116,86 +120,52 @@
         }
         .quiz-option-item.disabled {
             @apply opacity-50 cursor-not-allowed;
-            box-shadow: none; /* Disable glow when disabled */
-        }
-
-        /* Countdown text styling */
-        .countdown-text-display {
-            @apply text-5xl font-extrabold text-cyber-cyan;
-            letter-spacing: 0.1em;
-            text-shadow: 0 0 10px var(--tw-colors-cyber-cyan), 0 0 20px var(--tw-colors-cyber-cyan);
-            line-height: 1.2;
+            box-shadow: none;
         }
     </style>
 </head>
-<body class="bg-deep-dark text-white overflow-hidden touch-action-manipulation">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
-        // Ensure React and ReactDOM are available
-        const { useState, useEffect, useRef, useCallback } = React;
+        const { useState, useEffect, useCallback, useRef } = React;
         const { createRoot } = ReactDOM;
 
-        // Helper for Lucide Icons
+        // Componente envoltorio para Lucide Icons en el navegador
         const LucideIcon = ({ name, size = 24, color = 'currentColor', className = '' }) => {
             const iconRef = useRef(null);
             useEffect(() => {
-                if (iconRef.current && lucide && lucide.createIcons) {
-                    iconRef.current.innerHTML = lucide.icons[name] ? lucide.icons[name].toSvg({
+                if (iconRef.current && window.lucide && window.lucide.createIcons) {
+                    iconRef.current.innerHTML = window.lucide.icons[name] ? window.lucide.icons[name].toSvg({
                         width: size,
                         height: size,
                         stroke: color,
                         class: className
                     }) : '';
-                    lucide.createIcons(); // Re-render all icons
+                    window.lucide.createIcons({
+                        root: iconRef.current.parentNode
+                    });
                 }
             }, [name, size, color, className]);
             return <span ref={iconRef} className={className} data-lucide={name}></span>;
         };
 
-        // --- Global Constants --- //
+        // --- Constantes Globales --- //
         const EVENT_NAME = "Tecnológica Santa Cruz 2026";
         const SLOGAN = "Haz que pase";
         const ANNIVERSARY = "15º Aniversario";
-        // Define the target date for the event activation:
-        // May 15, 2026, 21:00 in Santa Cruz de Tenerife (UTC+1 assuming no daylight saving shifts at that specific time of year, otherwise it's UTC+0 for Canary Islands).
-        // Using ISO string 'YYYY-MM-DDTHH:mm:ss' will be interpreted as local time in most browsers if no timezone is specified.
-        // To be explicit for Santa Cruz de Tenerife (Canary Islands, usually WET/WEST = UTC+0/UTC+1):
-        // For 21:00 on May 15, 2026, which is typically UTC+1 during daylight saving. Set it to UTC+0 to be safe.
-        const TARGET_ACTIVATION_DATE = new Date('2026-05-15T21:00:00+01:00'); // Explicitly 21:00 UTC+1
+        const TARGET_ACTIVATION_DATE = new Date('2026-05-15T21:00:00+01:00'); // 15 de Mayo 2026, 21:00 (UTC+1)
+        const TRIGGER_DURATION_MS = 9000;
 
         const QUIZ_QUESTIONS = [
-            {
-                question: "¿En qué año se celebró por primera vez la Tecnológica Santa Cruz?",
-                options: ["2011", "2006", "2016", "2021"],
-                answer: "2011"
-            },
-            {
-                question: "¿Qué conocido hacker y experto en ciberseguridad es famoso por llevar gorra y ha participado en el evento?",
-                options: ["Kevin Mitnick", "Julian Assange", "Chema Alonso", "Edward Snowden"],
-                answer: "Chema Alonso"
-            },
-            {
-                question: "¿Cuál de estos icónicos lugares ha sido sede de la Tecnológica Santa Cruz?",
-                options: ["Auditorio de Tenerife", "Teatro Guimerá", "Recinto Ferial", "Museo de la Naturaleza y el Hombre"],
-                answer: "Teatro Guimerá"
-            },
-            {
-                question: "¿Qué entidad ha sido uno de los principales organizadores del evento a lo largo de los años?",
-                options: ["Cabildo de Tenerife", "Gobierno de Canarias", "Sociedad de Desarrollo de Santa Cruz", "Universidad de La Laguna"],
-                answer: "Sociedad de Desarrollo de Santa Cruz"
-            },
-            {
-                question: "¿Cuál es el lema actual del evento, inspirando a la acción y la innovación?",
-                options: ["Conecta y Avanza", "Digitaliza el Futuro", "Haz que pase", "Innovar para Crecer"],
-                answer: "Haz que pase"
-            },
+            { question: "¿En qué año se celebró por primera vez la Tecnológica Santa Cruz?", options: ["2011", "2006", "2016", "2021"], answer: "2011" },
+            { question: "¿Qué conocido hacker y experto en ciberseguridad es famoso por llevar gorra y ha participado en el evento?", options: ["Kevin Mitnick", "Julian Assange", "Chema Alonso", "Edward Snowden"], answer: "Chema Alonso" },
+            { question: "¿Cuál de estos icónicos lugares ha sido sede de la Tecnológica Santa Cruz?", options: ["Auditorio de Tenerife", "Teatro Guimerá", "Recinto Ferial", "Museo de la Naturaleza y el Hombre"], answer: "Teatro Guimerá" },
+            { question: "¿Qué entidad ha sido uno de los principales organizadores del evento a lo largo de los años?", options: ["Cabildo de Tenerife", "Gobierno de Canarias", "Sociedad de Desarrollo de Santa Cruz", "Universidad de La Laguna"], answer: "Sociedad de Desarrollo de Santa Cruz" },
+            { question: "¿Cuál es el lema actual del evento, inspirando a la acción y la innovación?", options: ["Conecta y Avanza", "Digitaliza el Futuro", "Haz que pase", "Innovar para Crecer"], answer: "Haz que pase" },
         ];
-        const TRIGGER_DURATION_MS = 9000; // 9 seconds for activation state
 
-        // --- API Utilities --- //
-
-        // Web Audio API Context and Oscillator
+        // --- Utilidades de Audio y Vibración --- //
         let audioContext = null;
         let oscillator = null;
         let gainNode = null;
@@ -204,75 +174,52 @@
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
-            // Ensure audio context is resumable for iOS/Safari
             if (audioContext.state === 'suspended') {
                 await audioContext.resume();
             }
-            // Play a tiny silent buffer to fully unlock on iOS
             const buffer = audioContext.createBuffer(1, 1, 22050);
             const source = audioContext.createBufferSource();
             source.buffer = buffer;
             source.connect(audioContext.destination);
             source.start(0);
             source.stop(0.001);
-
-            console.log("AudioContext initialized and resumed.");
         };
 
         const playTriggerSound = () => {
             if (!audioContext) return;
-
-            // Stop any existing oscillator
-            if (oscillator) {
-                oscillator.stop();
-                oscillator.disconnect();
-            }
-            if (gainNode) {
-                gainNode.disconnect();
-            }
+            if (oscillator) { oscillator.stop(); oscillator.disconnect(); }
+            if (gainNode) gainNode.disconnect();
 
             oscillator = audioContext.createOscillator();
             gainNode = audioContext.createGain();
 
-            oscillator.type = 'sawtooth'; // Sawtooth wave for zumbido
-            oscillator.frequency.setValueAtTime(55, audioContext.currentTime); // Start at 55Hz
-            oscillator.frequency.linearRampToValueAtTime(110, audioContext.currentTime + TRIGGER_DURATION_MS / 1000); // Ramp to 110Hz
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(55, audioContext.currentTime);
+            oscillator.frequency.linearRampToValueAtTime(110, audioContext.currentTime + TRIGGER_DURATION_MS / 1000);
 
-            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); // Start at half volume
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + TRIGGER_DURATION_MS / 1000); // Fade out
+            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + TRIGGER_DURATION_MS / 1000);
 
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
-
             oscillator.start(audioContext.currentTime);
 
             setTimeout(() => {
-                if (oscillator) {
-                    oscillator.stop();
-                    oscillator.disconnect();
-                    oscillator = null;
-                }
-                if (gainNode) {
-                    gainNode.disconnect();
-                    gainNode = null;
-                }
+                if (oscillator) { oscillator.stop(); oscillator.disconnect(); oscillator = null; }
+                if (gainNode) { gainNode.disconnect(); gainNode = null; }
             }, TRIGGER_DURATION_MS);
         };
 
         const vibrateDevice = () => {
             if (navigator.vibrate) {
-                // Pattern: 400ms on, 100ms off, 400ms on, 100ms off, 800ms on, 100ms off, 1200ms on
                 navigator.vibrate([400, 100, 400, 100, 800, 100, 1200]);
-                // Repeat for the duration of the trigger
                 const interval = setInterval(() => {
                     navigator.vibrate([400, 100, 400, 100, 800, 100, 1200]);
-                }, 3100); // Total duration of one pattern is 400+100+400+100+800+100+1200 = 3100ms
+                }, 3100);
                 setTimeout(() => {
                     clearInterval(interval);
-                    navigator.vibrate(0); // Stop vibration
+                    navigator.vibrate(0);
                 }, TRIGGER_DURATION_MS);
-            } else {
-                console.warn("Vibration API not supported.");
             }
         };
 
@@ -281,15 +228,11 @@
             if ('wakeLock' in navigator) {
                 try {
                     wakeLock = await navigator.wakeLock.request('screen');
-                    console.log('Screen Wake Lock is active!');
-                    wakeLock.addEventListener('release', () => {
-                        console.log('Screen Wake Lock was released');
-                    });
                 } catch (err) {
-                    console.error(`${err.name}, ${err.message}`);
+                    if (err.name !== 'NotAllowedError') {
+                        console.warn(`Wake Lock error: ${err.name}, ${err.message}`);
+                    }
                 }
-            } else {
-                console.warn("Screen Wake Lock API not supported.");
             }
         };
 
@@ -297,23 +240,21 @@
             if (wakeLock) {
                 wakeLock.release();
                 wakeLock = null;
-                console.log('Screen Wake Lock released.');
             }
         };
 
-        // --- Components --- //
+        // --- Componentes --- //
 
         const LandingScreen = ({ onConnect }) => (
-            <div className="flex flex-col items-center justify-center h-screen w-screen text-center p-8 bg-deep-dark">
-                <LucideIcon name="zap" size={100} color="#00FFFF" className="mb-8 animate-pulse-glow" />
-                <h1 className="text-5xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-tech-purple to-electric-blue mb-4 leading-tight">{EVENT_NAME}</h1>
+            <div className="flex flex-col items-center justify-center min-h-screen w-full text-center p-8 bg-deep-dark">
+                <LucideIcon name="zap" size={100} color="#00FFFF" className="mb-8 animate-pulse-glow rounded-full" />
+                <h1 className="text-5xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-tech-purple to-electric-blue mb-4 leading-tight">
+                    {EVENT_NAME}
+                </h1>
                 <h2 className="text-3xl font-bold text-electric-blue mb-8">{ANNIVERSARY}</h2>
                 <button
                     onClick={onConnect}
-                    className="px-10 py-5 rounded-full text-2xl font-black uppercase tracking-wide
-                               bg-gradient-to-r from-tech-purple to-electric-blue text-deep-dark
-                               hover:from-electric-blue hover:to-tech-purple transition-all duration-300 transform active:scale-95
-                               focus:outline-none focus:ring-4 focus:ring-electric-blue focus:ring-opacity-75"
+                    className="px-10 py-5 rounded-full text-2xl font-black uppercase tracking-wide bg-gradient-to-r from-tech-purple to-electric-blue text-deep-dark hover:from-electric-blue hover:to-tech-purple transition-all duration-300 transform active:scale-95 focus:outline-none focus:ring-4 focus:ring-electric-blue focus:ring-opacity-75"
                 >
                     Vincular Dispositivo
                 </button>
@@ -321,8 +262,8 @@
         );
 
         const ConnectingScreen = () => (
-            <div className="flex flex-col items-center justify-center h-screen w-screen bg-deep-dark text-center p-8">
-                <LucideIcon name="loader" size={80} color="electric-blue" className="mb-6 animate-spin-slow" />
+            <div className="flex flex-col items-center justify-center min-h-screen w-full bg-deep-dark text-center p-8">
+                <LucideIcon name="loader" size={80} color="#00BFFF" className="mb-6 animate-spin-slow" />
                 <h2 className="text-4xl font-bold text-electric-blue animate-pulse-glow">Sincronizando Nodo...</h2>
             </div>
         );
@@ -330,7 +271,7 @@
         const QuizGame = ({ onComplete }) => {
             const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
             const [selectedAnswer, setSelectedAnswer] = useState(null);
-            const [feedback, setFeedback] = useState(null); // 'correct', 'incorrect', null
+            const [feedback, setFeedback] = useState(null);
             const [score, setScore] = useState(0);
             const [showResults, setShowResults] = useState(false);
 
@@ -351,7 +292,7 @@
                         setCurrentQuestionIndex(prev => prev + 1);
                     } else {
                         setShowResults(true);
-                        setTimeout(onComplete, 3000); // Show results then complete
+                        setTimeout(onComplete, 3000);
                     }
                 }, 1500);
             };
@@ -374,7 +315,7 @@
                         {currentQuestion.options.map((option, index) => (
                             <li
                                 key={index}
-                                onClick={() => selectedAnswer === null && handleAnswer(option)} /* Only allow click if no answer is selected */
+                                onClick={() => selectedAnswer === null && handleAnswer(option)}
                                 className={`quiz-option-item
                                     ${selectedAnswer === option ? 'is-selected' : ''}
                                     ${selectedAnswer === option && feedback === 'correct' ? 'correct' : ''}
@@ -391,22 +332,20 @@
             );
         };
 
-        // Helper function to calculate time remaining until a target date
         const calculateTimeRemaining = (targetDate) => {
             if (!targetDate) return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
             const now = new Date();
-            const difference = targetDate.getTime() - now.getTime(); // Diferencia en milisegundos
+            const difference = targetDate.getTime() - now.getTime();
 
-            if (difference <= 0) {
-                return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
-            }
+            if (difference <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 };
 
-            const seconds = Math.floor((difference / 1000) % 60);
-            const minutes = Math.floor((difference / 1000 / 60) % 60);
-            const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-
-            return { total: difference, days, hours, minutes, seconds };
+            return {
+                total: difference,
+                days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                minutes: Math.floor((difference / 1000 / 60) % 60),
+                seconds: Math.floor((difference / 1000) % 60)
+            };
         };
 
         const WaitingScreen = ({ onCountdownEnd }) => {
@@ -414,7 +353,7 @@
             const [timeRemaining, setTimeRemaining] = useState(calculateTimeRemaining(TARGET_ACTIVATION_DATE));
 
             useEffect(() => {
-                if (quizActive) return; // Pause countdown if quiz is active
+                if (quizActive) return;
 
                 const timer = setInterval(() => {
                     const newTimeRemaining = calculateTimeRemaining(TARGET_ACTIVATION_DATE);
@@ -422,42 +361,45 @@
 
                     if (newTimeRemaining.total <= 0) {
                         clearInterval(timer);
-                        onCountdownEnd(); // Trigger activation when countdown ends
+                        onCountdownEnd();
                     }
                 }, 1000);
 
                 return () => clearInterval(timer);
-            }, [quizActive, onCountdownEnd]); // Depend on quizActive and onCountdownEnd
+            }, [quizActive, onCountdownEnd]);
 
             return (
-                <div className="flex flex-col items-center justify-between h-screen w-screen p-8 bg-deep-dark">
-                    <div className="text-center">
+                <div className="flex flex-col items-center justify-between min-h-screen w-full p-6 md:p-8 bg-deep-dark">
+                    <div className="text-center mt-4">
                         <h2 className="text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-tech-purple to-electric-blue mb-4 leading-tight">{SLOGAN}</h2>
                         <p className="text-xl text-electric-blue">El momento está por llegar...</p>
                     </div>
 
-                    <div className="flex flex-col items-center space-y-8 my-auto">
+                    <div className="flex flex-col items-center space-y-6 my-auto w-full py-6">
                         {!quizActive ? (
                             timeRemaining.total > 0 ? (
-                                <div className="flex justify-center items-end space-x-4">
+                                <div className="flex flex-col justify-center items-center space-y-4 md:space-y-6">
+                                    {timeRemaining.days > 0 && (
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-5xl md:text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow leading-none">{String(timeRemaining.days).padStart(2, '0')}</span>
+                                            <span className="text-sm md:text-xl font-bold text-electric-blue uppercase tracking-widest mt-1">Días</span>
+                                        </div>
+                                    )}
+                                    {(timeRemaining.days > 0 || timeRemaining.hours > 0) && (
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-5xl md:text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow leading-none">{String(timeRemaining.hours).padStart(2, '0')}</span>
+                                            <span className="text-sm md:text-xl font-bold text-electric-blue uppercase tracking-widest mt-1">Horas</span>
+                                        </div>
+                                    )}
+                                    {(timeRemaining.days > 0 || timeRemaining.hours > 0 || timeRemaining.minutes > 0) && (
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-5xl md:text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow leading-none">{String(timeRemaining.minutes).padStart(2, '0')}</span>
+                                            <span className="text-sm md:text-xl font-bold text-electric-blue uppercase tracking-widest mt-1">Minutos</span>
+                                        </div>
+                                    )}
                                     <div className="flex flex-col items-center">
-                                        <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">{String(timeRemaining.days).padStart(2, '0')}</span>
-                                        <span className="text-xl font-bold text-electric-blue">Días</span>
-                                    </div>
-                                    <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">:</span>
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">{String(timeRemaining.hours).padStart(2, '0')}</span>
-                                        <span className="text-xl font-bold text-electric-blue">Horas</span>
-                                    </div>
-                                    <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">:</span>
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">{String(timeRemaining.minutes).padStart(2, '0')}</span>
-                                        <span className="text-xl font-bold text-electric-blue">Minutos</span>
-                                    </div>
-                                    <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">:</span>
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow">{String(timeRemaining.seconds).padStart(2, '0')}</span>
-                                        <span className="text-xl font-bold text-electric-blue">Segundos</span>
+                                        <span className="text-5xl md:text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow leading-none">{String(timeRemaining.seconds).padStart(2, '0')}</span>
+                                        <span className="text-sm md:text-xl font-bold text-electric-blue uppercase tracking-widest mt-1">Segundos</span>
                                     </div>
                                 </div>
                             ) : (
@@ -470,17 +412,14 @@
                         ) : (
                             <button
                                 onClick={() => setQuizActive(true)}
-                                className="px-6 py-3 rounded-full text-lg font-bold
-                                           bg-gradient-to-r from-tech-purple to-electric-blue text-deep-dark
-                                           hover:from-electric-blue hover:to-tech-purple transition-all duration-300
-                                           focus:outline-none focus:ring-2 focus:ring-electric-blue focus:ring-opacity-75"
+                                className="px-6 py-3 mt-6 rounded-full text-lg font-bold bg-gradient-to-r from-tech-purple to-electric-blue text-deep-dark hover:from-electric-blue hover:to-tech-purple transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-electric-blue focus:ring-opacity-75"
                             >
                                 Jugar Quiz ({QUIZ_QUESTIONS.length} preguntas)
                             </button>
                         )}
                     </div>
 
-                    <div className="text-gray-600 text-sm text-center">
+                    <div className="text-gray-600 text-sm text-center mb-4">
                         <p>Esperando la señal de activación...</p>
                     </div>
                 </div>
@@ -491,14 +430,10 @@
             const [isFlashing, setIsFlashing] = useState(true);
 
             useEffect(() => {
-                // Start flashing immediately
-                const flashInterval = setInterval(() => setIsFlashing(prev => !prev), 100); // 0.1s steps
-
-                // Trigger vibration and sound
+                const flashInterval = setInterval(() => setIsFlashing(prev => !prev), 100);
                 vibrateDevice();
                 playTriggerSound();
 
-                // End activation after TRIGGER_DURATION_MS
                 const timeout = setTimeout(() => {
                     clearInterval(flashInterval);
                     setIsFlashing(false);
@@ -514,16 +449,14 @@
             const backgroundColor = isFlashing ? 'bg-white' : 'bg-deep-dark';
 
             return (
-                <div className={`flex items-center justify-center h-screen w-screen ${backgroundColor} transition-colors duration-50`}>
-                    {/* The content itself is not visible during flash, just the background changes */}
+                <div className={`flex items-center justify-center min-h-screen w-full ${backgroundColor} transition-colors duration-50`}>
                 </div>
             );
         };
 
         const App = () => {
-            const [screen, setScreen] = useState('landing'); // 'landing', 'connecting', 'waiting', 'activating'
+            const [screen, setScreen] = useState('landing');
 
-            // Request wake lock when entering 'waiting' or 'activating' state
             useEffect(() => {
                 if (screen === 'waiting' || screen === 'activating') {
                     requestWakeLock();
@@ -532,7 +465,6 @@
                 }
             }, [screen]);
 
-            // Handle page visibility for wake lock re-acquisition
             useEffect(() => {
                 const handleVisibilityChange = () => {
                     if (document.visibilityState === 'visible' && (screen === 'waiting' || screen === 'activating')) {
@@ -540,17 +472,13 @@
                     }
                 };
                 document.addEventListener('visibilitychange', handleVisibilityChange);
-                return () => {
-                    document.removeEventListener('visibilitychange', handleVisibilityChange);
-                };
+                return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
             }, [screen]);
 
             const handleConnect = useCallback(async () => {
                 setScreen('connecting');
-                await initAudio(); // Initialize and resume AudioContext on user gesture
-                setTimeout(() => {
-                    setScreen('waiting');
-                }, 2000); // Simulate connection time
+                await initAudio();
+                setTimeout(() => setScreen('waiting'), 2000);
             }, []);
 
             const handleCountdownEnd = useCallback(() => {
@@ -558,11 +486,11 @@
             }, []);
 
             const handleActivationComplete = useCallback(() => {
-                setScreen('waiting'); // Return to waiting state after activation
+                setScreen('waiting');
             }, []);
 
             return (
-                <div className="h-screen w-screen overflow-hidden">
+                <div className="min-h-screen w-full overflow-x-hidden bg-deep-dark">
                     {screen === 'landing' && <LandingScreen onConnect={handleConnect} />}
                     {screen === 'connecting' && <ConnectingScreen />}
                     {screen === 'waiting' && <WaitingScreen onCountdownEnd={handleCountdownEnd} />}
@@ -571,15 +499,15 @@
             );
         };
 
-        // Mount the React application
-        createRoot(document.getElementById('root')).render(<App />);
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
 
-        // Initialize Lucide icons after all components have rendered once
-        // This might need to be called again if icons are dynamically added later
-        useEffect(() => {
-            lucide.createIcons();
-        }, []);
-
+        // Inicializar iconos de Lucide (por si queda alguno suelto, aunque el componente envoltorio lo gestiona)
+        window.addEventListener('load', () => {
+             if(window.lucide) {
+                 window.lucide.createIcons();
+             }
+        });
     </script>
 </body>
 </html>
