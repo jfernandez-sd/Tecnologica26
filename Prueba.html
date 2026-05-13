@@ -154,15 +154,20 @@
         const EVENT_NAME = "Tecnológica Santa Cruz 2026";
         const SLOGAN = "Haz que pase";
         const ANNIVERSARY = "15º Aniversario";
-        const TARGET_ACTIVATION_DATE = new Date('2026-05-13T14:56:00+01:00'); // 14 de Mayo 2026, 17:00 (UTC+1)
+        const TARGET_ACTIVATION_DATE = new Date('2026-05-13T23:05:00+01:00'); // Jueves 14 de Mayo 2026, 17:00 (UTC+1)
         const TRIGGER_DURATION_MS = 9000;
 
         const QUIZ_QUESTIONS = [
             { question: "¿En qué año se celebró por primera vez Tecnológica Santa Cruz?", options: ["2011", "2006", "2016", "2021"], answer: "2011" },
             { question: "¿Qué conocido hacker y experto en ciberseguridad es famoso por llevar gorra y ha participado en el evento?", options: ["Kevin Mitnick", "Julian Assange", "Chema Alonso", "Edward Snowden"], answer: "Chema Alonso" },
             { question: "¿Cuál de estos icónicos lugares ha sido sede de Tecnológica Santa Cruz?", options: ["Auditorio de Tenerife", "Teatro Guimerá", "Recinto Ferial", "Museo de la Naturaleza y el Hombre"], answer: "Teatro Guimerá" },
-            { question: "¿Qué entidad ha sido uno de los principales organizadores del evento a lo largo de los años?", options: ["Cabildo de Tenerife", "Gobierno de Canarias", "Sociedad de Desarrollo de Santa Cruz", "Universidad de La Laguna"], answer: "Sociedad de Desarrollo de Santa Cruz" },
+            { question: "¿Qué entidad ha sido la organizadora del evento a lo largo de los años?", options: ["Cabildo de Tenerife", "Gobierno de Canarias", "Sociedad de Desarrollo de Santa Cruz", "Universidad de La Laguna"], answer: "Sociedad de Desarrollo de Santa Cruz" },
             { question: "¿Cuál es el lema actual del evento, inspirando a la acción y la innovación?", options: ["Conecta y Avanza", "Digitaliza el Futuro", "Haz que pase", "Innovar para Crecer"], answer: "Haz que pase" },
+            { question: "¿Qué temática suele ser uno de los pilares fundamentales de las ponencias de Tecnológica?", options: ["Agricultura tradicional", "Inteligencia Artificial y Ciberseguridad", "Historia del Arte", "Deportes acuáticos"], answer: "Inteligencia Artificial y Ciberseguridad" },
+            { question: "Además de las ponencias principales, ¿qué otro formato de charlas suele incluir Tecnológica enfocado a los jóvenes?", options: ["TecnoEduca", "TecnoFight", "TecnoHack", "TecnoPlay"], answer: "TecnoEduca" },
+            { question: "¿En qué isla se celebra anualmente Tecnológica?", options: ["Gran Canaria", "Lanzarote", "Tenerife", "La Palma"], answer: "Tenerife" },
+            { question: "¿A qué público está dirigida principalmente Tecnológica Santa Cruz?", options: ["Solo a programadores", "Exclusivamente a inversores", "A todos los públicos, desde profesionales hasta curiosos", "Solo a estudiantes"], answer: "A todos los públicos, desde profesionales hasta curiosos" },
+            { question: "¿En que formato de Tecnológica puedes encontrar una Arena?", options: ["TecnoEduca", "TecnoFight", "TecnoHack", "TecnoPlay"], answer: "TecnoPlay" }
         ];
 
         // --- Utilidades de Audio y Vibración --- //
@@ -353,8 +358,6 @@
             const [timeRemaining, setTimeRemaining] = useState(calculateTimeRemaining(TARGET_ACTIVATION_DATE));
 
             useEffect(() => {
-                if (quizActive) return;
-
                 const timer = setInterval(() => {
                     const newTimeRemaining = calculateTimeRemaining(TARGET_ACTIVATION_DATE);
                     setTimeRemaining(newTimeRemaining);
@@ -366,7 +369,14 @@
                 }, 1000);
 
                 return () => clearInterval(timer);
-            }, [quizActive, onCountdownEnd]);
+            }, [onCountdownEnd]);
+
+            // Condición para detectar los últimos 10 segundos
+            const isFinalTenSeconds = timeRemaining.days === 0 && 
+                                      timeRemaining.hours === 0 && 
+                                      timeRemaining.minutes === 0 && 
+                                      timeRemaining.seconds <= 10 && 
+                                      timeRemaining.total > 0;
 
             return (
                 <div className="flex flex-col items-center justify-between min-h-screen w-full p-6 md:p-8 bg-deep-dark">
@@ -401,6 +411,15 @@
                                         <span className="text-5xl md:text-7xl lg:text-8xl font-extrabold text-cyber-cyan text-shadow-glow leading-none">{String(timeRemaining.seconds).padStart(2, '0')}</span>
                                         <span className="text-sm md:text-xl font-bold text-electric-blue uppercase tracking-widest mt-1">Segundos</span>
                                     </div>
+                                    
+                                    {/* Mensaje de los últimos 10 segundos */}
+                                    {isFinalTenSeconds && (
+                                        <div className="mt-10 px-4 text-center animate-pulse">
+                                            <p className="text-2xl md:text-3xl font-black text-tech-pink uppercase tracking-wider text-shadow-glow">
+                                                ¡Sube el volumen y eleva tu móvil al cielo!
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <h3 className="text-4xl font-extrabold text-cyber-cyan animate-pulse-glow">¡ACTIVANDO!</h3>
@@ -410,12 +429,14 @@
                         {quizActive ? (
                             <QuizGame onComplete={() => setQuizActive(false)} />
                         ) : (
-                            <button
-                                onClick={() => setQuizActive(true)}
-                                className="px-6 py-3 mt-6 rounded-full text-lg font-bold bg-gradient-to-r from-tech-purple to-electric-blue text-deep-dark hover:from-electric-blue hover:to-tech-purple transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-electric-blue focus:ring-opacity-75"
-                            >
-                                Jugar Quiz ({QUIZ_QUESTIONS.length} preguntas)
-                            </button>
+                            !isFinalTenSeconds && timeRemaining.total > 0 && (
+                                <button
+                                    onClick={() => setQuizActive(true)}
+                                    className="px-6 py-3 mt-6 rounded-full text-lg font-bold bg-gradient-to-r from-tech-purple to-electric-blue text-deep-dark hover:from-electric-blue hover:to-tech-purple transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-electric-blue focus:ring-opacity-75"
+                                >
+                                    Jugar Quiz ({QUIZ_QUESTIONS.length} preguntas)
+                                </button>
+                            )
                         )}
                     </div>
 
